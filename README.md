@@ -1,6 +1,9 @@
 # airbnb_project
 A data science project that explore Airbnb data for Boston and Seattle to answer the question 'How do people profit from becoming an Airbnb host?'
 
+There's also a simplified version published on medium. You can follow the link here:
+https://medium.com/@agustinus.thehub/this-is-how-you-get-more-bookings-and-higher-ratings-as-airbnb-host-ff2846834b3e
+
 
 
 # Installation
