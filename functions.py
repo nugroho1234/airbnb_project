@@ -18,8 +18,11 @@ from sklearn.ensemble import RandomForestRegressor
 
 def clean_price(df, col):
     '''
-    Input : dataframe to be cleaned (df), and column to be cleaned(col) indicating price
-    Output : cleaned dataframe with col dtype = float (extract only the number)
+    Returns dataframe with price cleaned
+
+    Keyword arguments:
+    df  -- master dataframe (Boston and Seattle listing)
+    col -- a column with price as value
     '''
     df[col] = df[col].str.replace('$', '')
     df[col] = df[col].str.replace(',', '')
@@ -30,8 +33,11 @@ def clean_price(df, col):
 
 def clean_percentage(df, col):
     '''
-    Input : dataframe to be cleaned (df), and column to be cleaned(col) indicating percentage
-    Output : cleaned dataframe with col dtype = float (eliminate '%')
+    Returns dataframe with percentage cleaned
+
+    Keyword arguments:
+    df  -- master dataframe (Boston and Seattle listing)
+    col -- a column with percentage as value
     '''
     df[col] = df[col].str.replace('%', '')
     df[col] = df[col].astype('float')
@@ -41,10 +47,11 @@ def clean_percentage(df, col):
 
 def clean_dataframe(df, drop_cols):
     '''
-    Input = listing dataframe
-    Output = Semi cleaned dataframe with price and percentage values possess float dtype, thumbnail_available column,
-    verification_method column, and imputed values for city, market and cleaning_fee column
+    Returns initially cleaned dataframe
 
+    Keyword arguments:
+    df        -- master dataframe (Boston and Seattle listing)
+    drop_cols -- columns to be dropped
     '''
     #drop columns if the columns exist in dataframe
     for col in drop_cols:
@@ -99,8 +106,10 @@ def clean_dataframe(df, drop_cols):
 
 def predict_zip(df, master_df):
     '''
-    Input ---- a dataframe with neighbourhood_cleansed and zipcode columns in the dataframe
-    Output --- a dataframe with zipcode already predicted
+    Returns an array of predicted zipcode
+
+    df        -- a copy of master dataframe
+    master_df -- master dataframe (Boston and Seattle listing)
     '''
 
     #creating a new dataframe, get dummies on neighbourhood_cleansed, drop that column
@@ -121,7 +130,7 @@ def predict_zip(df, master_df):
 
     #using decision tree classifier to predict zipcode
     print("Creating decision tree classifier model...")
-    tree_mod = DecisionTreeClassifier()
+    tree_mod = DecisionTreeClassifier(random_state = 42)
     tree_mod.fit(X_train, y_train)
     y_pred = tree_mod.predict(X_test)
     print("DONE!")
@@ -145,8 +154,14 @@ def predict_zip(df, master_df):
 
 def rf_type(X_train, X_test, y_train, y_test):
     '''
-    Input: This function inputs training and testing sets from X and y variables
-    Output: This function prints f1 score for training and testing phase, and returns best model to be used to predict..
+    Prints f1 score for training and testing phase
+    Returns best model to be used for prediction
+
+    Keyword arguments:
+    X_train -- X training data with X = columns other than property_type
+    X_test  -- X testing data with X = columns other than property_type
+    y_train -- y training data with y = property_type
+    y_test  -- y testing data with y = property_type
     '''
 
     clf = RandomForestClassifier(random_state=42)
@@ -180,8 +195,13 @@ def rf_type(X_train, X_test, y_train, y_test):
 
 def predict_property_type(df, master_df, cols_to_clean):
     '''
-    Input: a copy of master_df
-    Output: a dataframe with single column containing predicted values of property type
+    Prints feature rank when predicting property_type
+    returns an array of predicted property_type
+
+    Keyword arguments:
+    df            -- a copy of master dataframe
+    master_df     -- master dataframe
+    cols_to_clean -- columns that are not needed for prediction
     '''
     df = master_df.copy()
     #dropping unneeded variables
@@ -230,9 +250,16 @@ def predict_property_type(df, master_df, cols_to_clean):
     return property_type_cc
 
 
-
 def predict_rf(df, col, master_df, cols_to_clean):
+    '''
+    Returns an array of predicted numeric column
 
+    Keyword arguments:
+    df            -- a copy of master dataframe
+    col           -- column to predict (numeric values)
+    master_df     -- master dataframe
+    cols_to_clean -- columns that are not needed for prediction
+    '''
     #creating copy of master_df, dropping unneeded variables
     df = master_df.copy()
     df.drop(cols_to_clean, axis = 1, inplace = True)
@@ -250,7 +277,7 @@ def predict_rf(df, col, master_df, cols_to_clean):
     y = df_clean[col]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
     #using random forest regresor
-    rf = RandomForestRegressor()
+    rf = RandomForestRegressor(random_state = 42)
     rf.fit(X_train, y_train)
     y_pred = rf.predict(X_test)
 
@@ -277,8 +304,12 @@ def predict_rf(df, col, master_df, cols_to_clean):
 
 def plot_features(master_df, y_col):
     '''
-    Input: the master dataframe and a column which represents target variable
-    Output: this function returns nothing, but it plots the top 3 feature importances of the random forest regressor
+    Plot top 3 feature importances
+    Returns MSE score for the prediction
+
+    Keyword arguments:
+    master_df -- master dataframe
+    y_col     -- column to be predicted
     '''
 
     #create a copy of the master dataframe and drop unneeded columns
@@ -305,6 +336,8 @@ def plot_features(master_df, y_col):
     #conducting random forest regression
     rf_reg = RandomForestRegressor(random_state = 42)
     rf_reg.fit(X, y)
+    y_pred = rf_reg.predict(X)
+    MSE_score = mean_squared_error(y, y_pred)
 
     #mapping feature importance
     importances = rf_reg.feature_importances_
@@ -321,54 +354,28 @@ def plot_features(master_df, y_col):
     feat_imp.plot.barh(title='Feature Importances')
     plt.xlabel('Feature Importance Score')
     plt.show()
+    return MSE_score
 
-
-
-def wifi_available(amenities_str):
+def plot_amenities(means_if_1, means_if_0, plot_title):
     '''
-    INPUT
-        amenities_str - a string of one of the values from the amenities column
+    Plots a comparison of performance of hosts providing top 3 amenities
 
-    OUTPUT
-        return 1 if "Wireless Internet" in amenities_str
-        return 0 otherwise
-
+    Keyword arguments:
+    means_if_1 -- a tuple consisting mean performance if hosts provide top 3 amenities
+    means_if_0 -- a tuple consisting mean performance if hosts don't provide top 3 amenities
+    plot_title -- a string describing the plot title
     '''
-    if "Wireless Internet" in amenities_str:
-        return 1
-    else:
-        return 0
+    indices = range(len(means_if_0))
+    names = ['index', 'wifi','kitchen','heating']
+    # Calculate optimal width
+    width = np.min(np.diff(indices))/3.
 
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.bar(indices-width/2.,means_if_1,width,color='b',label='Yes')
+    ax.bar(indices+width/2.,means_if_0,width,color='r',label='No')
+    ax.axes.set_xticklabels(['','wifi','','kitchen','','heating'])
 
-
-def heating_available(amenities_str):
-    '''
-    INPUT
-        formal_ed_str - a string of one of the values from the Formal Education column
-
-    OUTPUT
-        return 1 if "Heating" in amenities_str
-        return 0 otherwise
-
-    '''
-    if "Heating" in amenities_str:
-        return 1
-    else:
-        return 0
-
-
-
-def kitchen_available(amenities_str):
-    '''
-    INPUT
-        formal_ed_str - a string of one of the values from the Formal Education column
-
-    OUTPUT
-        return 1 if "Kitchen" in amenities_str
-        return 0 otherwise
-
-    '''
-    if "Kitchen" in amenities_str:
-        return 1
-    else:
-        return 0
+    ax.legend()
+    plt.title(plot_title)
+    plt.show()
